@@ -1,0 +1,20 @@
+4d3
+< Not much to see here.
+15,16c14,15
+< A treasure chest sits already opened.
+< The chest is empty...
+---
+> You see what looks like the corner of a treasure chest poking out of the ground.
+> You open the chest and find 10 coins!
+18a18
+> Not much to see here.
+20a21
+> Not much to see here.
+24c25
+< ================================================================
+---
+> 2, 1> ================================================================
+28c29
+<   COINS:    40
+---
+>   COINS:    50

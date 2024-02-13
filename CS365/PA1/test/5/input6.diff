@@ -1,0 +1,36 @@
+4d3
+< Not much to see here.
+15,16c14,15
+< A treasure chest sits already opened.
+< The chest is empty...
+---
+> You see what looks like the corner of a treasure chest poking out of the ground.
+> You open the chest and find 10 coins!
+18,19c17,18
+< A treasure chest sits already opened.
+< The chest is empty...
+---
+> You see what looks like the corner of a treasure chest poking out of the ground.
+> You open the chest and find 10 coins!
+48c47
+< You see a key on the ground! Might need that to get out of here...
+---
+> You see a key on the ground! Might need that too get out of here...
+51c50
+< You see a key on the ground! Might need that to get out of here...
+---
+> You see a key on the ground! Might need that too get out of here...
+68c67
+< A treasure chest sits already opened.
+---
+> You see what looks like the corner of a treasure chest poking out of the ground.
+70,71c69,70
+< A treasure chest sits already opened.
+< The chest is empty...
+---
+> You see what looks like the corner of a treasure chest poking out of the ground.
+> You open the chest and find 10 coins!
+79c78
+<   COINS:    50
+---
+>   COINS:    80

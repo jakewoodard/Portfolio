@@ -1,0 +1,277 @@
+<title> CS302 -- Lab Assignment 1</title>
+<style> p.page { page-break-after: always; } </style>
+
+<h1> CS302 -- Lab Assignment 2 (100 pts: Spring 2021)</h1>
+
+<hr>
+<h3>Getting motivated</h3>
+Another week, another sorting assignment.
+Similar to Lab 1,
+you will define a class for storing multi-column data
+consisting of a firstname, a lastname, and a phone number 
+(all made up, but you knew that),
+read unspecified amounts of such data from a given file 
+and apply
+the std::sort algorithm before you print the result to stdout.
+Then the real work begins by
+you implementing a variant of the quicksort algorithm 
+described in class that in its basic form replaces std::sort and
+in a more advanced version based on the quickselect algorithm that
+allows partitioning of the data followed
+by sorting within a given range.
+<p>
+
+Read the assignment a couple of times. Look at the output 
+examples below. Run the solution code to become familiar 
+with its behavior. Ask questions on Piazza so the whole
+class can benefit from your confusion. Chances are you 
+are not alone. Do this for every lab assignment.
+<p>
+
+<hr>
+<h3>Lab submission and due date</h3>
+Your friendly TAs will tell you how to submit your work to Canvas.
+Do not email your code to the instructor or the TAs as they cannot 
+upload the code to Canvas for you.
+<p>
+
+Qsort.cpp is due 11:59pm Thursday Feb 11, 2021.
+You only submit this one file. The incremental
+development outlined below is merely intended to make
+solving the problem more manageable. 
+The submitted code must compile and execute without
+seg faulting to be graded.
+<p>
+
+<hr>
+
+<h3>Getting started</h3>
+
+Run the script
+/home/cosc302/labs/lab2/copy to obtain 
+a Hydra executable called sqsort, 
+data files called
+list1.txt, list2.txt, and list3.txt, 
+a skeleton program called
+Qsort.cpp, and a makefile for compiling it
+into a Hydra executable (once properly fleshed out).
+Your job is to write the missing source code which must
+behave as described next.
+<p>
+
+
+<h3>Assignment details</h3>
+
+<UL>
+
+<LI>
+<b>Vers 1</b> Modify Qsort.cpp as follows. 
+The data class has three private
+data members: firstname, lastname, and phonenumber. 
+Add code for data class input and output operators.
+The input operator simply reads each of data items when 
+called.
+The output operator prints a data object to stdout using 
+the format: lastname firstname phonenumber. 
+See examples below. Part of the assignment is for you
+to figure out how to maintain a fixed width of the name field 
+so that all phonenumbers are left justified to the same column 
+position.
+Finally, implement printlist() as a templated function that 
+takes generic iterator arguments and steps thru the data
+while printing to stdout.
+Do whatever else is needed to make the program compile such as
+adding missing header files and commenting out pseudo-code. 
+Then test and make sure it reads and writes data from the 
+list files as required.
+<p>
+
+<LI>
+<b>Vers 2</b> Add an overloaded operator&lt; to the data class,
+so you can impose an order on such objects. Test that it works by
+applying the std::sort algorithm before writing the list content 
+to stdout. Objects that have the same lastname should use the
+firstnames to determine which is less than the other. Objects
+that also have the same firstnames should use the phone numbers
+to determine which is less than the other. See examples below.
+<p>
+
+<LI>
+<b>Vers 3</b>
+Add command line argument handling. When completed, any one
+of the following three ways of calling Qsort should be valid:
+<p>
+
+<pre>
+unix> Qsort -stl list.txt
+unix> Qsort -rpivot list.txt
+unix> Qsort -rpivot k0 k1 list.txt
+</pre>
+
+<p>
+The first version executes the code from above.
+The second version sorts the data using
+your own implementation of quicksort.
+The third version partitions the input data using quickselect
+below before applying quicksort to sort the data in the
+range given by integers k0 and k1. Without checking,
+assume that k0 is less than k1. 
+Do check if k0 is less than 0, in which case 
+it should silently be changed to 0. 
+Likewise, check if k1 is greater than or equal to the number of 
+elements in the data array, say N, and if so, silently change 
+it to N-1.
+<p>
+
+<LI>
+<b>Vers 4</b>
+Implement quicksort as follows.
+Copy the partition() and quicksort() functions 
+from the class04_sorting_3 handout.
+Replace the median-of-three pivot with a randomly chosen
+index in the left-to-right range and use it to partition the data.
+This new version forces you to think about how the median-of-three
+partitioning code works since unlike for it, 
+you may now need to explicitly check and 
+prevent going out-bounds during the search for data pairs to swap. 
+To make you think even more about the algorithm, 
+merge all the functionality into the quicksort()
+function. That is, do not have an external function that carries
+out the partitioning. Keep it all inside the quicksort() function 
+which is  called from main.
+Test and compare the output with what you obtained using std::sort. 
+The two output should be identical since they use the same comparison
+operator.
+<p>
+
+<LI>
+<b>Vers 5</b>
+Copy the quickselect() function from the class04_sorting_3 handout.
+Embed the random pivot based partition code that you
+added to quicksort(). The resulting function will take four
+arguments, i.e., quickselect(A, left, k, right) where A is a data
+array, left and right designate the first and the last indices
+to consider (the range), and k the element that needs to be
+selected (found and put in its proper place).
+Make whatever other modifications
+are needed to get the code to compile. 
+Test the program to make sure you the selection is correct.
+<p>
+
+Use quickselect(A, 0, k0, N-1) to put the k0-th element in its
+proper location and partition the data in A accordingly.
+That is, ensure that all data stored to the left of A[k0]
+is lexicographically less than or equal to it.
+All data stored to the right of A[k0] must likewise be
+greater than or equal to it.
+<p>
+
+Then
+use quickselect(A, k0, k1, N-1) to put the k1-th element in its
+proper location and partition the data in A accordingly. Note
+that data indexed below k0 is ignored at this point. When this
+works, use the quicksort() function to sort the data in the 
+k0 thru k1 index range.
+<p>
+
+This completes the assignment. Submit Qsort.cpp on Canvas after 
+you have cleaned the code up and added a few comments.
+<p>
+
+</UL>
+<hr>
+
+<!-- <p class="page"></p> -->
+<h3>Data and executable output examples</h3>
+<pre>
+unix> cat list1.txt
+
+CANDACE WITT        	250-939-5404
+THEODORE PERKINS    	723-668-3397
+THAD HULL           	708-807-6757
+STEPHAN SALAZAR     	415-413-5058
+ISRAEL WILKINS      	938-701-1455
+BRUCE PERRY         	540-916-2956
+VALENTIN RIVERS     	726-204-2377
+WILFRED JOHNSTON    	582-126-8861
+JORDAN WILKINS      	938-701-1455
+LEVI SPENCE         	985-365-7415
+KAYLA NGUYEN        	484-322-1527
+
+unix> ./Qsort -stl list1.txt 
+
+HULL, THAD              708-807-6757	0
+JOHNSTON, WILFRED       582-126-8861	1
+NGUYEN, KAYLA           484-322-1527	2
+PERKINS, THEODORE       723-668-3397	3
+PERRY, BRUCE            540-916-2956	4
+RIVERS, VALENTIN        726-204-2377	5
+SALAZAR, STEPHAN        415-413-5058	6
+SPENCE, LEVI            985-365-7415	7
+WILKINS, ISRAEL         938-701-1455	8
+WILKINS, JORDAN         938-701-1455	9
+WITT, CANDACE           250-939-5404	10
+
+unix> ./Qsort -rpivot list1.txt 
+
+[same as above]
+
+unix> ./Qsort -rpivot 3 5 list1.txt
+
+JOHNSTON, WILFRED       582-126-8861	0
+HULL, THAD              708-807-6757	1
+NGUYEN, KAYLA           484-322-1527	2
+PERKINS, THEODORE       723-668-3397	3 **
+PERRY, BRUCE            540-916-2956	4 **
+RIVERS, VALENTIN        726-204-2377	5 **
+SPENCE, LEVI            985-365-7415	6
+SALAZAR, STEPHAN        415-413-5058	7
+WILKINS, ISRAEL         938-701-1455	8
+WITT, CANDACE           250-939-5404	9
+WILKINS, JORDAN         938-701-1455	10
+</pre>
+
+The line numbers added to right for the last output are for illustrational purposes 
+and not produced by the program. They help you see that the data in lines 3-5 is sorted
+(by design), that the data lines 0-1, 6-7, and 9-10 are not, and that the data in 
+lines 2 and 8 are (by chance).
+
+<pre>
+
+unix> ./Qsort -stl list3.txt | grep FRANK | head -10
+
+ALLEN, FRANK            315-870-8352
+BAKER, FRANK            632-844-8785
+BELL, FRANK             822-318-4291
+BENNETT, FRANK          936-442-8282
+BROWN, FRANK            374-427-9120
+BUTLER, FRANK           269-462-6264 **
+BUTLER, FRANK           396-862-5765 **
+CARTER, FRANK           648-481-5277 **
+CARTER, FRANK           673-417-2955 **
+DIAZ, FRANK             594-782-3469
+
+</pre>
+
+Notice that entries are sorted by lastname, then firstname and then phonenumber. There
+may not be similar duplicates in list1.txt and list2.txt.
+
+<hr>
+
+<h3>Grading rubric</h3>
+
+Note: Output format of your program must MATCH
+that of the solution executable. Use the diff command to compare.
+<br>
+
+<h4> Quicksort (100) </h4>
+<pre>
+10: Class data: operator>> and operator<< 
+10: Class data: operator< 
+20: Main function incl. command line handling, printlist function
+30: Quicksort: random pivot, integrated partitioning while-loop safety guard(s)
+30: Quickselect: random pivot, integrated partitioning, while-loop safety guard(s)
+</pre>
+
+<hr>
+Fri Jan 29 19:21:30 EST 2021

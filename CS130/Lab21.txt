@@ -1,0 +1,10 @@
+Kenneth James Woodard
+1/23/20
+
+Circuit 1 is made to read in two hexadecimal numbers, either one or two digits. It will compare each digit to the other numbers digit and output the lesser of each. This circuit is comprised of an AND gate, two hexadecimal inputs and two outputs (hexadecimal displays). 
+
+Circuit 2 is made to switch the red button between off and on. Each time you flip the switch to the left on the red light switches on or off. There is also kill switch (but is a button) on the left side, below the on/off switch. This circuit is comprised of a switch, a button (kill switch), and the output, the red light.  
+
+Circuit 3 is made to count 0-F in hexadecimal integers. Each time you flip the switch (on the bottom) the output increases by one. Once the counter hits F, the next output is zero and starts over. When you click the input button on the left, the output is reset to 0. This circuit consists of two inputs (the incrementing button and the reset switch), the counter itself, and the output (the hex display panel). 
+
+Circuit 4 is a circuit that contains a sub-circuit called "Mystery." It reads in two hexadecimal numbers and outputs 2 single hex digits. The mystery circuit takes the two hex digits and adds them together before sending the sum to the display. This circuit contains two hexadecimal inputs, the "mystery" sub-circuit, and the hex displays for the 2 digit sum. 

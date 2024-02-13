@@ -1,0 +1,38 @@
+4d3
+< Not much to see here.
+6c5
+< You see a key on the ground! Might need that to get out of here...
+---
+> You see a key on the ground! Might need that too get out of here...
+13,14c12,15
+< A treasure chest sits already opened.
+< The chest is empty...
+---
+> You see a key on the ground! Might need that too get out of here...
+> You see what looks like the corner of a treasure chest poking out of the ground.
+> You picked up a key!
+> You open the chest and find 10 coins!
+18,19c19,22
+< A treasure chest sits already opened.
+< The chest is empty...
+---
+> You see a key on the ground! Might need that too get out of here...
+> You see what looks like the corner of a treasure chest poking out of the ground.
+> You picked up a key!
+> You open the chest and find 10 coins!
+23,24c26,29
+< A treasure chest sits already opened.
+< The chest is empty...
+---
+> You see a key on the ground! Might need that too get out of here...
+> You see what looks like the corner of a treasure chest poking out of the ground.
+> You picked up a key!
+> You open the chest and find 10 coins!
+27c32
+< 0, 0> You have died from exhaustion.
+---
+> 0, 0> You died due exhaustion.
+32c37
+<   COINS:    10
+---
+>   COINS:    40

@@ -1,0 +1,293 @@
+<title> CS140 -- Lab Assignment 8</title>
+
+<h1> CS140 -- Lab Assignment 8 (100 pts: Fall 2020)</h1>
+
+<hr>
+<h3>Getting motivated</h3>
+
+Yeah! You have made it to the last CS140 lab. This time,
+you will put much of what you have learned together into two related
+programs.
+That is,
+you will define multiple classes with public and private members,
+overload an operator or two,
+perform command-line option decoding, read data from a file, 
+use a list (std::vector), a balanced binary search tree (std::map),
+and a binary heap (std:make_heap) as well as associated iterators.
+When completed, the programs will print info to stdout for your
+enjoyment. OK, maybe that's a stretch. But 
+after not having been able to compile your program,
+you will be glad to finally see it do something.
+
+<hr>
+<h3>Lab submission and due date</h3>
+Submit your work via Canvas as usual.
+All code should be contained in two files called Rank_byname.cpp 
+Rank_byscores.cpp. 
+The due date is 11.59pm Tuesday Dec 1, 2020.
+NOTE:
+You do not need two weeks for this lab. However,
+Exam 3 is scheduled for Tuesday Nov 24, 2020,
+and then you head home for Thanksgiving.
+So, if you need it, you have extra time. That said,
+you will likely have finals to study for, so waiting
+may not be your best option. Indeed,
+you are strongly encouraged to get the lab done right 
+away.
+<p>
+
+<hr>
+<h3>Programs you need to write </h3>
+
+Write the following code. Seek help well in advance
+of the deadline to clarify any points of confusion
+you may have. 
+
+<UL>
+<LI>
+Run the /home/cosc140/labs/lab8/copy script 
+to obtain a Hydra exectuables called srank_byname, srank_byscores, 
+skeleton programs Rank_byname.cpp and Rank_byscores.cpp,
+example data files
+name_scores1.txt, name_scores2.txt, name_scores3.txt,
+and a makefile.
+As usual, the executables showcase the functionality described next.
+When in doubt about what to do, run the executables and study
+the output.
+<p>
+
+<LI>
+For 60 points,
+update Rank_byname.cpp as follows.
+Have the main function parse commandline options to determine
+the width of printed name fields discusssed below as well as a
+name_scoresN.txt file from which to read said names plus an unspecified number of
+integer scores per name.
+<p>
+
+Flesh out the class called name_t which holds and prints 
+the name.
+Public members must include one or more constructors as needed,
+an overloaded less-than comparison operator, i.e.,
+operator&lt;(),
+which returns true if the string "lastname, firstname"
+is lexicographically less than the corresponding string for a
+right hand side argument,
+and a function called print()
+which produces the required output format including the 
+printing of ellipses. Specifically, each "lastname, firstname"
+output should be followed first by a blank space and then
+by enough ellipses (...) to fill out the width specified by
+the aforementioned first command line argument. 
+Functions and their arguments and return values should be
+made const to the extent possible.
+<p>
+
+Flesh out class scores_t which holds and prints 
+the integers scores and their mean.
+Public members must include one or more constructors as 
+needed,
+a function called insert() for adding a score,
+a function called insert_done() 
+for computing and adding the mean score,
+and a function called print() for printing
+the scores and the mean to stdout.
+A vector is used to hold the scores. 
+<p>
+
+Hint:
+Use can the STL algorithm
+accumulate() to do some of the heavy lifting.
+See cplusplus.com for details.
+<p>
+
+The main function must
+include command line parsing as well as
+reading, parsing, and processing of data 
+from a given input file.
+That is, your
+program must make sure that two commandline
+arguments
+are present where the first argument is
+an integer (W) that specifies how wide
+a field to use when printing the name,
+and the second argument specifies a file.
+Proper program usage should be printed to
+stderr if either argument is missing.
+Mimic the behavior of the solution executable.
+<p>
+
+The main function must use an std::map container
+to store pairs of name_t and scores_t objects.
+The name_t object is the key that determines
+where the data goes in the map.
+The scores_t object is the data that goes with it.
+You will not be allowed to change the name_t
+object once it has been inserted into the map.
+You can change the scores_t object data 
+as necessary.
+Your program must silently reject insertion of new
+data, if the map already contains a node with the
+same name_t object. 
+<p>
+
+For the Rank_byname program, data processing 
+simply means printing the output in alphabetical
+order. This in turn translates into an inorder
+traversal of the map 
+(which you may recall is a balanced BST).
+Use an iterator based loop to achieve this.
+<p>
+
+Make no assumptions about the number of lines in
+an input file. 
+Do assume that the input file is structurally
+consistent in that all students have a firstname
+and lastname and that they all have the same number
+of lab scores but make no assumptions what that
+number is (it may vary from file to file).
+<p>
+
+<LI>
+For 40 points,
+update Rank_byscores.cpp 
+by copying most of the code from Rank_byname.cpp 
+and adding the following.
+<p>
+
+<p>
+Update classes name_t and scores_t as needed.
+This may include adding default constructor
+and a less-than comparison operator. You probably
+won't know exactly what this means until you
+do everything else and then realize your code won't
+compile.
+
+<p>
+Flesh out class namescores_t which stores a 
+(name_t, scores_t) object pair.
+You will need to add one or more constructor,
+an overloaded less-than operator, as well as
+print_name() and print_scores() functions.
+The less-than operator should compare
+mean values and use the name as a tie breaker.
+Study the output of the solution code if this
+doesn't make sense to you.
+<p>
+
+Update the main function to store namescores_t
+objects in a vector instead of the map used in
+Rank_byname.cpp. When done reading data from the 
+input file, turn the vector data into a binary 
+max-heap. 
+Then enter into a for-loop that outputs the K 
+largest mean-value records or less, if the
+data available has been exhausted.
+<p>
+
+<LI>
+Friendly warning: 
+The compiler may complain vigorously when you try 
+to compile your code.
+One of the things you need to watch out for when
+using iterator access of STL containers is
+whether they should provide read-only access.
+That is, you may need to use const references
+and you may need to declare member functions const.
+Of course, don't use a const reference if you plan
+to change the data. Like all painful exercises,
+you will learn an important lesson from this.
+Fingers crossed you learn it quickly!
+<p>
+
+In a pre-emptive strike, make all function reference
+arguments const unless the data needs to be changed.
+Likewise, declare all class member functions that
+do not alter the state of an object for const.
+Undo as necessary to make the compiler happy, but
+use read-only access as your default mode of
+operation.
+<p>
+
+</UL>
+
+<hr>
+<h3>Executable output examples</h3>
+
+Note: Extra white space has been added for ease of reading,
+and [snip] means output has been cut. 
+<p>
+
+<b>Data: filename.txt</b>
+<pre>
+UNIX> cat name_scores1.txt 
+
+OLIN TORRES         	81	73	58	54
+MARGARITA REED      	81	75	94	54
+FEDERICO CAMPOS     	95	88	80	79
+ADRIENNE NASH       	87	57	98	70
+JERROD SAUNDERS     	84	53	80	71
+GEORGIA BLACKWELL   	61	79	58	71
+LELA PHILLIPS       	75	57	53	50
+JON MEADOWS         	73	53	99	74
+KIRSTEN MURRAY      	69	65	73	90
+JOHNATHON FARMER    	68	88	66	89
+
+[snip]
+</pre>
+
+<b>Output: ./Rank_byname W filename.txt</b>
+
+<pre>
+UNIX> ./Rank_byname 18 name_scores1.txt 
+
+BLACKWELL, GEORGIA .. 61 79 58 71 : 67.2
+BROOKS, RANDELL ..... 75 92 94 85 : 86.5
+BROWNING, DALE ...... 76 68 63 96 : 75.8
+CAMPOS, FEDERICO .... 95 88 80 79 : 85.5
+CRUZ, JACK .......... 51 76 70 67 : 66.0
+FARMER, JOHNATHON ... 68 88 66 89 : 77.8
+
+[snip]
+</pre>
+
+<b>Output: ./Rank_byscores W K filename.txt</b>
+
+<pre>
+UNIX> ./Rank_byscores 18 6 name_scores1.txt 
+
+WIGGINS, HARRIS ..... 72 93 93 93 : 87.8
+TATE, DENA .......... 95 83 90 82 : 87.5
+JACKSON, JAMAL ...... 98 81 88 80 : 86.8
+BROOKS, RANDELL ..... 75 92 94 85 : 86.5
+CAMPOS, FEDERICO .... 95 88 80 79 : 85.5
+KNAPP, KENYA ........ 81 95 51 92 : 79.8
+
+[snip]
+</pre>
+
+<hr>
+
+<h3>Grade Rubric</h3>
+
+<h4>Rank_byname (60 points)</h4>
+<pre>
+*20: Definition and implementation of name_t class. 
+*20: Definition and implementation of scores_t class. 
+*20: Implementation of main function including commandline argument
+     processing, reading and parsing of input data from file using map,
+     object instantions and handling, and iterator based output loop.
+
+</pre>
+
+<h4>Rank_byscores (40 points)</h4>
+<pre>
+*20: Definition and implementation of namescores_t class. 
+*20: Implementation of main function including commandline argument
+     processing, reading and parsing of input data from file using vector,
+	 conversion of vector into binary max-heap,
+     object instantions and handling, and max-heap based output loop.
+</pre>
+<hr>
+
+Mon Nov 16 16:58:31 EST 2020

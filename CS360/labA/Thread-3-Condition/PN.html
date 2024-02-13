@@ -1,0 +1,53 @@
+<pre>
+- Talk about the simulation and its overall arc.
+- We're going to have a thread per printer and a thread per printer.
+- Look at header, talk about driver.
+- Parameters:
+    - nusers
+    - nprinters
+    - arrtime
+    - maxpages
+    - bufsize ------ HIGHLIGH THIS.
+    - nevents
+
+- Look at the Spq struct.  Each thread gets the same spq struct, with only
+    the id that is different.
+
+- Main thread calls initialize_v (look in header), with a master copy
+    of Spq.  You write this.
+
+- User threads -- just talk about what they do.  The main thing is that
+    they call submit_job() -- go over a job struct.  This needs to return
+    when the job is on the print queue (buffer).  Otherwise, it blocks.
+
+- Printer threads -- again talk about what they do.  They call get_print_job().
+    It only returns when there is a job.  Returns NULL when the simulation
+    is done.
+
+- Reiterate again what the matin thread does.
+
+- Dummy solution, in src/ps1.c.  Go over running it: 5 3 5 5 3.
+
+- Set up the bounded buffer and write the user code.  Start with
+    src/ps2-for-class.c -- that defines the buffer, and initialization.
+    Write submit_job() and exit when the buffer is full.  Test.
+
+- Put in the sleep call, and test.
+- Write get_print_job and test.
+- Bitch about polling.
+
+- Go over monitors and condition variables.  initialize, wait, signal
+  (broadcast). Talk about the two-stage waking up and that you want to hold
+  the mutex when you call signal, even though you don't have to.  Best to
+  unlock it when you're done.
+
+- Now put the code into the simulation.  Maybe just the printers at first.
+
+- Then the users.  Do the "if" statement that has the bug.
+
+- Now the bug.  Show html/bug.html and go over how it happens.
+  How could you find this bug?  Well, you'll notice performance suffering.
+
+  It happens in the output (ps4-bad.txt).
+
+  Fix it.  

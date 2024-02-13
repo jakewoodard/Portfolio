@@ -1,0 +1,46 @@
+<pre>
+Why threads?
+    1. Asynchrony
+    2. Parallelism
+    (Huge help in writing an operating system).
+
+What are threads:
+   - "Lightweight processors" as opposed to "task", "pod", "heavyweight"
+   - Exist in the same memory space, so they share code/globals/heap/stack.
+   - Allow the threads to communicate via memory rather than through the OS or with serial
+           communication.
+   - When you program with threads, you assume that they execute simultaneously.
+     Sometimes this is true, and sometimes this is managed via the operating system, and
+           sometimes managed internally to the process.
+   - generic thread_fork() -> TCB.  generic thread_join(tcb).
+   - differentiate fork() and thread_fork().  Differentiate wait() and thread_join().
+
+Posix threads:
+   - #include &lt;pthread.h&gt;
+   - man pthread_create and pthread_join 
+   - write hello world.
+   - Forking multiple threads.  print4.c -- Creates four threads.  Passes
+         an (int *) to each thread.  Each thread prints its number. 
+         Join with all four, and print before and after joining.
+         Make sure each (int *) is distinct.
+
+         See if you get multiple outputs with print4.
+
+exit() vs pthread_exit().
+
+   - Modifiy print4 so that all threads call pthread_exit(), including the main thread.
+   - Put a pthread_exit() into main before the join calls.  Still runs fine.
+   - Now, have all the threads sleep for a second, and have the main thread return.
+       Process dead.
+   - Change the return back to pthread_exit().
+   - Have the threads call exit().
+
+Preemption:
+
+   - Have the main thread go into an infinite loop.  Go over preemption v non-preemption,
+     and that most machines these days are by nature preemptive because of multiple CPU's.
+
+Pthread_detach
+
+my first race condition -- do p4bc. and pass &i instead of (ids+i).  If you really want to
+confuse them, do it again, but start with print4.c.

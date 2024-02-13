@@ -1,0 +1,23 @@
+njobs    User 0                  User 1                 Printer 0             Printer 1
+-----    -----------             -----------            -----------           ---------------
+  0                                                     get_print_job()
+  0                                                     pthread_cond_wait()
+  0                                                                           get_print_job()
+  0                                                                           pthread_cond_wait()
+  0      submit_job()                                                                            
+  0      pthread_mutex_lock()                                                                    
+  1      Add job to the queue                                                                    
+  1      pthread_cond_signal()                                                                   
+  1                                                                           pthread_cond_wait() 
+                                                                              will return when it gets the mutex
+  1                              submit_job()                                                    
+  1                              pthread_mutex_lock()-blocks
+  1      pthread_mutex_unlock()  
+  1                              pthread_mutex_lock()-unblocks
+  2                              Add job to the queue  
+  2                              Doesn't call pthread_cond_signa()
+  2                              pthread_mutex_unlock()
+  2                                                                           pthread_cond_wait() returns
+  1                                                                           prints users 0's job.
+  1                                                     This printer never wakes up.
+

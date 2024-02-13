@@ -1,0 +1,313 @@
+<title> CS140 -- Lab Assignment 4</title>
+
+<h1> CS140 -- Lab Assignment 4 (130 pts: Fall 2020)</h1>
+
+<hr>
+<h3>Getting motivated</h3>
+This lab has you write a program called Hashtable
+which brings together many of the data structures and C++/STL concepts
+you have learned about.
+<p>
+
+<hr>
+<h3>Lab submission and due date</h3>
+The Hashtable program is due 11.59pm Tuesday, October 13, 2020.
+<p>
+
+<hr>
+<h3>Keeping track of words in files</h3>
+
+Ascii files contain alpha-numerically encoded words plus some
+punctuation and control characters such as newline. 
+Your task is to write a C++ program called Hashtable.cpp
+that reads the ascii file specified on the command-line 
+along with some other optional arguments
+(and provides an error and exits as appropriate),
+builds a hash table of the words in the file
+along with the line numbers at which they are found,
+and then allows the user to enter an unlimited number of
+search terms from stdin. Each search must print 
+the line number for each occurrence of the search
+term and the corresponding lines of text to stdout. 
+Only the first instance of a word on a line should be stored.
+
+See example output below. Note that the Hashtable program 
+will look for word occurrences while the unix command
+grep looks for word and substring occurences (e.g. "so" is a word
+as well as a substring of "awesome").
+
+<p>
+All code is to be placed in a single file called
+"Hashtable.cpp" with class definitions and utility
+functions at the top and the main application function 
+at the bottom.
+Do not split your code into header and source code files.
+
+<hr>
+
+<h3>Code you need to write </h3>
+
+<UL>
+<LI>
+For 0 points,
+implement hashtable_qp.cpp from the hashtable2_handout. This will
+form the base for your work. Make sure the code compiles and runs
+as expected. You only need the hash function for string data.
+Delete the others.
+
+<p>
+<LI>
+For 80 points, modify the hash_table class code as follows. 
+
+<p>
+Augment the hash_table class with a private
+subclass called "key_line" that uses a string to hold a
+key (word) and a vector of integers to keep track of all the
+line numbers where the key is found in the input file. 
+You will neither need to implement a constructor or 
+a destructor (the defaults will do fine), 
+but you must implement a key_line::inuse() member function 
+that indicates whether the object holds a key or not.
+You will also need to overload the 
+comparison operator, i.e., operator==(). 
+That's it for key_line
+which should be based on a struct instead of a class to make
+it readily available to the hash_table member functions.
+
+<p>
+Remove all template references used by the hash_table class
+which should instead be modified to explicitly use the key_line
+subclass. This includes making member functions 
+qprobe(), insert(), and resize() all
+use key_line::inuse() when checking to see
+if an entry exists.
+
+<p>
+Modify the call to the hash_table::nextprime() member function 
+to simply provide the current table size as the argument.
+Modify nextprime() itself to compute the next prime number
+which is greater than or equal to two times the given 
+argument plus one. With the initial number thus being odd,
+exclude even numbers from the search by incrementing the
+possible next prime number by two.
+
+<p>
+Modify the hash_table::insert() member function to add a 
+key if one is not present in the hash table for the word
+in question.
+Update each key_line object to 
+maintain a sorted list of all <it>unique </it> 
+line numbers where it occurs.
+That is, search the line number vector mentioned above
+and if not found, add the new line number at the end of
+the list. Use std::find() to carry out the search. 
+
+<p>
+Add a public member function hash_table::find() 
+that returns a constant reference to the vector
+of line numbers associated with the hash table entry 
+for a given key. If the key is not found, a reference to
+an empty vector is returned. You deal with this in 
+the main program.
+
+<p>
+Add a public member function called
+hash_table::insert_done() as a wrapper to a private
+member function called hash_table::showload() that
+prints load statistics to stdout as shown below.
+Call this function when all data from the input
+file has been inserted.
+
+<p>
+Update the hash_table code to optionally
+track and show simple usage statistics, 
+namely, the number of hash table slots used and available,
+and the total number of collisions encountered when 
+inserting new data. Add needed boolean variables that control 
+whether and when this is done. Make the default false and
+add a public member function called 
+hash_table::set_showstats() that
+can change this to true.
+Since collisions should not be counted when searching
+during a call to hash_table::find(), 
+update member function hash_table::qprobe() 
+to take a second argument that controls whether collisions 
+are counted or not.
+
+<LI>
+For 50 points, modify the main program as follows.
+
+<p>
+Add parsing of command line arguments. 
+The input text file is specified as "-f file".
+Argument "-N numwords" is optional
+where numwords is the number of words
+initially expected to be inserted into the hash table.
+Make the default 23. If given a number less than 1,
+exit the program with a meaningful error message.
+Argument "-showstats" is optional. If set, 
+the public hash_table::set_showstats() member
+function is called. See example output below.
+The arguments can appear in any order. Be sure
+to check that enough command line arguments exist
+before reading them.
+
+<p>
+Main operates as follows.
+Open the input file specified and enter into
+a loop that reads and processes the text lines. 
+Save each text line in a data cache,
+e.g., vector&lt;string&gt;, for retrieval later on.
+Then change all punctuation characters, 
+i.e., (, ), {, }, and ., to a blank space. 
+Specifically,
+wrap std::ispunct(), which can handle the detection 
+(see "man ispunct"), inside a function to be called
+replace_punctuation() that you pass along to
+std::transform() which sweeps thru the text line
+characters.  Have function
+replace_punctuation() return either the character
+tested (give as its input argument) or a blank space
+(for punctuation characters).
+Finally, use a string stream to parse the
+resulting text line into words which you insert into
+a hash table along with the current line number.
+Terminate the loop and
+close the input file upon EOF.
+Then call hash_table::insert_done() to print the
+final load statistics.
+
+<p>
+Add a second loop that prompts the user for
+words to search for. 
+Print all line numbers and the corresponding text for each
+successfull search. Print nothing for an unsuccessfull search.
+Use the vector of line numbers returned by hash_table::find()
+to do this. Look up the text in the above mentioned data cache
+for each line number. Terminate this loop upon EOF.
+See output examples below.
+<p>
+
+Make no assumptions about the number of lines in the input file.
+Make no assumptions about the number of characters or words
+on each line.
+The test files may be pure ascii text, html code, or even a C++ 
+program. Your code should work regardless of the type of ascii
+data stored in the file.
+<p>
+
+<LI> 
+Run the script /home/cosc140/labs/lab4/copy to obtain
+a Hydra executable called shashtable that works as described above,
+a copy of the dictionary file, and a makefile.
+Other than that, you're on your own!
+
+</UL>
+
+<hr>
+
+<h3>Executable output examples</h3>
+Note: Blank lines have been inserted below for readability.
+<p>
+
+<b>Hashtable: command line checking</b>
+
+<pre>
+UNIX> ./Hashtable 
+usage: ./shashtable [-N number] [-showstats] -f textfile
+</pre>
+
+<b>Hashtable: data processing </b>
+
+<pre>
+UNIX> cat -n sometext.txt
+
+    1    Wow!
+    2    Hash tables are so cool.
+    3    CS140 is great.
+    4    I learn so much.
+    5    This is awesome.
+
+UNIX> ./Hashtable -f sometext.txt
+
+find> Wow
+1:  Wow!
+
+find> so
+2:  Hash tables are so cool.
+4:  I learn so much.
+
+find> great
+3:  CS140 is great.
+
+find> CTRL-D
+</pre>
+
+<pre>
+
+UNIX> ./Hashtable -f dict.txt -N 1 -showstats
+
+** N =      3 load = 0.33
+** N =      7 load = 0.43
+** N =     17 load = 0.47
+** N =     37 load = 0.49
+** N =     79 load = 0.49
+** N =    163 load = 0.50
+** N =    331 load = 0.50
+** N =    673 load = 0.50
+** N =   1361 load = 0.50
+** N =   2729 load = 0.50
+** N =   5471 load = 0.50
+** N =  10949 load = 0.50
+** N =  21911 load = 0.50
+** N =  43853 load = 0.50
+** N =  87719 load = 0.50
+** N = 175447 load = 0.42
+
+find> CTRL-D
+
+Run stats ...
+Number of slots used: 74099
+Max number of slots:  87723
+Number of collisions: 49970
+
+UNIX> ./Hashtable -f dict.txt -N 74136 -showstats 
+
+** N = 148279 load = 0.50
+
+find> CTRL-D
+
+Run stats ...
+Number of slots used: 74099
+Max number of slots:  74139
+Number of collisions: 33504
+
+</pre>
+
+In case you wonder why only 74099 slots are used when the dict.txt
+file contains 74136 words, the reason is that some words
+contain apostrophes which we remove thereby creating duplicates
+of the remaining subwords. These are only inserted once. The
+goal is not to store everything, but to achieve a simple extraction
+of words without punctuation characters. 
+
+<hr>
+
+<h3>Grade Rubric</h3>
+<p>
+See previous lab assignments for notes on general expectations.
+
+<h4>Hashtable (130 points)</h4>
+<pre>
+*20: hash_table: use of key_line instead of template data
+*20: hash_table: nextprime() modifications
+*20: hash_table: insert() and find() modifications
+*20: hash_table: showstats modifications
+*20: main: commandline parsing and error reporting
+*10: main: reading data, storing in cache, parsing into words
+*10: main: building hash table of words and line occurrences
+*10: main: prompting for search terms and outputting result
+</pre>
+
+<hr>
+Wed Sep 30 13:10:01 EDT 2020

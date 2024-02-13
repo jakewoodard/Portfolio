@@ -1,0 +1,576 @@
+<title>CS360 Lecture notes -- Thread #2 -- Race conditions and Mutexes</title>
+<body bgcolor=ffffff>
+<h1>CS360 Lecture notes -- Thread #2 -- Race conditions and Mutexes</h1>
+<UL>
+<LI><a href=http://web.eecs.utk.edu/~jplank>James S. Plank</a>
+<LI>Directory: <b>/home/plank/cs360/notes/Thread-2-Race</b>
+<LI>Lecture notes:
+    <a href=http://web.eecs.utk.edu/~jplank/plank/classes/cs360/360/notes/Thread-2-Race/lecture.html>
+    <b>
+  http://web.eecs.utk.edu/~jplank/plank/classes/cs360/360/notes/Thread-2-Race/lecture.html
+</b></a>
+<LI> Original notes: Mid 2000's, I'm guessing
+<LI> Last modified: <i>
+Wed Apr 20 16:00:28 EDT 2022
+</i>
+</ul>
+<hr>
+
+In this lecture, we cover race conditions and mutexes.
+
+<p>
+<hr>
+<h3>Race conditions</h3>
+
+A race condition is when a piece of code, with multiple units of execution (such as threads),
+has a piece of data which can be read and written in multiple, unspecified, orders.
+Race conditions are typically bad.  I say "typically," because sometimes they won't matter.
+However, usually a race condition in your code is going to be a bug eventually, so it is a
+good idea to know how to recognize race conditions, and how to use synchronization 
+data structures (such as mutexes and condition variables) to avoid them, while still 
+allowing a good degree of parallelism.
+<p>
+Take a look at 
+<b><a href=src/race1.c>src/race1.c</a></b>.  Its explanation is inline with the code:
+
+<p><center><table border=3 cellpadding=3><td><pre>
+<font color=blue>/* This program forks off two threads which share an integer,    
+   on which there is a race condition. */</font>
+
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;pthread.h&gt;
+
+<font color=blue>/* This is information shared by the two threads. */</font>
+
+typedef struct {
+  int i;
+  int die;
+} Shared_Info;
+
+<font color=blue>/* This is information which will be unique to each thread (SI is a pointer to shared data) */</font>
+
+typedef struct {
+  int id;
+  Shared_Info *SI;
+} Info;
+
+<font color=blue>/* Here's the thread code -- pretty simple. */</font>
+
+void *thread(void *x)
+{
+  Info *I;
+ 
+  I = (Info *) x;
+
+  while (!I-&gt;SI-&gt;die) I-&gt;SI-&gt;i = I-&gt;id;
+  return NULL;
+}
+
+<font color=blue>/* The main code sets up the shared and unique info, then forks off two threads.
+   It then sleeps for two seconds and prints out the shared variable, si.i.
+   Finally, it calls pthread_join() to wait for the two threads to die, and
+   prints out the shared variable again. */</font>
+
+int main(int argc, char **argv)
+{
+  pthread_t tids[2];
+  Shared_Info si;
+  Info I[2];
+  void *retval;
+
+  <font color=blue>/* Set up the data to send to the threads. */</font>
+
+  I[0].id = 0;
+  I[0].SI = &si;
+
+  I[1].id = 1;
+  I[1].SI = &si;
+
+  si.die = 0;
+  
+  <font color=blue>/* Create the two threads and sleep */</font>
+
+  if (pthread_create(tids, NULL, thread, I) != 0) { perror("pthread_create"); exit(1); }
+  if (pthread_create(tids+1, NULL, thread, I+1) != 0) { perror("pthread_create"); exit(1); }
+  sleep(2);
+
+  <font color=blue>/* Tell the threads to die, then print the shared info. */</font>
+
+  si.die = 1;
+  printf("%d\n", si.i);
+
+  <font color=blue>/* Wait for the threads to die and print out the shared info again. */</font>
+
+  if (pthread_join(tids[0], &retval) != 0) { perror("pthread_join"); exit(1); }
+  if (pthread_join(tids[1], &retval) != 0) { perror("pthread_join"); exit(1); }
+  printf("%d\n", si.i);
+
+  return 0;
+}
+</pre></td></table></center><p>
+
+Ok -- this program forks off two threads.  Each thread has its own <b>Info</b> struct,
+which contains an id unique to the thread -- either 0 or 1.  The <b>Info</b> struct also
+has a pointer to a <b>Shared_Info</b> struct, which is shared between the two threads.
+The <b>Shared_Info</b> struct has two variables -- <b>i</b>, which each thread is going to
+repeatedly overwrite with its id, and <b>die</b>, which each thread checks, and when it is
+one, the threads exit.
+<p>
+Ask yourself the following question: <i>Where are the <b>Info</b> and <b>Shared_Info</b> structs
+stored?  Heap or stack?  If stack, whose stack?</i>
+<p>
+The answer is that they are stored on the main thread's stack.  There is no restriction on 
+where threads can access memory -- a pointer is a pointer, and if it points to another thread's
+stack, so be it!
+<p>
+It should be pretty clear that this program has a race condition.  The two threads are wontonly
+overwriting <b>I->SI->i</b> without any synchronization.  If I asked you what the output of
+this program will be, you have to say that you don't really know.  It can be one of four
+things:
+
+<pre>
+UNIX> <font color=darkred><b>bin/race1</b></font>
+0
+1
+UNIX> <font color=darkred><b>bin/race1</b></font>
+1
+0
+UNIX> <font color=darkred><b>bin/race1</b></font>
+0
+0
+UNIX> <font color=darkred><b>bin/race1</b></font>
+1
+1
+UNIX>
+</pre>
+The shell script 
+<b><a href=scripts/r1.sh>scripts/r1.sh</a></b> 
+runs it 100 times, putting the output of each run on a single
+line.  After taking the 200 seconds to run the shell script, you can see that all outputs
+have occurred:
+
+<pre>
+UNIX> <font color=darkred><b>sh scripts/r1.sh > r1-output.txt</b></font>
+UNIX> <font color=darkred><b>grep '0 0' r1-output.txt | wc</b></font>
+      26      52     104
+UNIX> <font color=darkred><b>grep '0 1' r1-output.txt | wc</b></font>
+      55     110     220
+UNIX> <font color=darkred><b>grep '1 0' r1-output.txt | wc</b></font>
+      10      20      40
+UNIX> <font color=darkred><b>grep '1 1' r1-output.txt | wc</b></font>
+       9      18      36
+UNIX> <font color=darkred><b></b></font>
+</pre>
+
+<p>
+This is most definitely a race condition.  Is it a bad one?  Not really, because this program
+doesn't do anything but demonstrate a race condition.  Let's look at a more complex race 
+condition:
+
+<hr>
+<h3>Race2.c: A more complex race condition.</h3>
+
+Look at 
+<a href=src/race2.c><b>src/race2.c</b></a>.
+This is another pretty simple program.  The command line arguments call for
+the user to specify the number of threads, a string size and a number
+of iterations.  Then the program does the following.  It allocates
+an array of <b>stringsize</b> characters.  Then it forks off <b>nthreads</b>
+threads, passing each thread its id, the number of iterations, and 
+the character array.  Each thread loops for the
+specified number of iterations.  At each iteration, it fills in the
+character array  with one character -- thread 0 uses 'A', thread 1 uses
+'B' and so on.  At the end of an iteration, the thread prints out the
+character array.  So, if we call it with the arguments 4, 4, 1, we'd
+expect the following output:
+<pre>
+UNIX> <font color=darkred><b>bin/race2 4 4 1</b></font>
+Thread 0: AAA
+Thread 1: BBB
+Thread 2: CCC
+Thread 3: DDD
+UNIX> 
+</pre>
+Similarly, the following make sense:
+<pre>
+UNIX> <font color=darkred><b>bin/race2 4 4 2</b></font>
+Thread 0: AAA
+Thread 0: AAA
+Thread 1: BBB
+Thread 1: BBB
+Thread 2: CCC
+Thread 2: CCC
+Thread 3: DDD
+Thread 3: DDD
+UNIX> <font color=darkred><b>bin/race2 4 30 2</b></font>
+Thread 0: AAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+Thread 0: AAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+Thread 1: BBBBBBBBBBBBBBBBBBBBBBBBBBBBB
+Thread 1: BBBBBBBBBBBBBBBBBBBBBBBBBBBBB
+Thread 2: CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+Thread 2: CCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+Thread 3: DDDDDDDDDDDDDDDDDDDDDDDDDDDDD
+Thread 3: DDDDDDDDDDDDDDDDDDDDDDDDDDDDD
+UNIX> 
+</pre>
+
+Unfortunately, that output is not 
+guaranteed.  The reason is that 
+threads can be preempted anywhere.  In particular,
+they may be preempted in the middle of the <b>for()</b> loop, or
+in the middle of the <b>printf()</b> statement.  This can lead to 
+strange output.  For example, try the following:
+<pre>
+UNIX> <font color=darkred><b>bin/race2 2 70 200000 | grep 'AB'</b></font>
+</pre>
+This searches for output lines where the character 'A' is followed by a B.
+When I ran this, I got:
+
+<pre>
+UNIX> <font color=darkred><b>bin/race2 2 70 200000 | grep 'AB'</b></font>
+Thread 0: AAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
+Thread 1: AAAABBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
+UNIX> 
+</pre>
+
+This shows two instances where thread 0 was interrupted by thread 1, which had
+been interrupted in the middle of its <b>for</b> loop.  When thread 1 resumed, 
+it overwrote the string with B's.
+<p>
+So, this program too has a race condition, this time with the shared array <b>s</b>.  
+The output above is particularly confusing, which is often what happens with race 
+conditions.
+<p>
+When you program with threads, you must pay attention to shared memory.  If
+more than one thread can modify the shared memory, then you often need 
+to protect the memory so that wierd things do not happen to the memory.
+<p>
+In our <b>race2</b> program, we can "fix" the race condition by enforcing
+that no thread can be interrupted by another thread when it is modifying
+and printing <b>s</b>.  This can be done with a <b>mutex</b>, sometimes
+called a "lock" or sometimes a "binary semaphore."  There are three
+procedures for dealing with mutexes in pthreads:
+<pre>
+int pthread_mutex_init(pthread_mutex_t *mutex, NULL);
+int pthread_mutex_lock(pthread_mutex_t *mutex);
+int pthread_mutex_unlock(pthread_mutex_t *mutex);
+</pre>
+<p>
+All three return 0 on success and something else if they fail.
+<p>
+You create a mutex with <b>pthread_mutex_init()</b>.  You have to
+have allocated memory for it ahead of time (i.e.
+<b>pthread_mutex_init()</b> does not call <b>malloc()</b>.  Then any
+thread may lock or unlock the mutex.  When a thread locks the mutex,
+no other thread may lock it.  If a thread calls
+<b>pthread_mutex_lock()</b> while the mutex is locked, then the
+thread will block until the mutex is unlocked.  Only one thread may
+lock the mutex at a time.
+<p>
+<i><b><font color=darkgreen>I want to point out here, that pthread_mutex_lock() does not actively "lock"
+other threads.  Instead, it locks a data structure, which can be shared among the
+threads.  The locking and unlocking of the data structure makes synchronization guarantees,
+which are very important to avoiding race conditions.  However, I don't want you to get into
+the habit of thinking that pthread_mutex_lock() actively blocks other threads, or "locks them
+out."  It doesn't -- it locks a data structure, and when other threads try to lock the 
+same data structure, they block.  Please reread this paragraph.</b></font></i>
+<p>
+So, we "fix" the program with 
+<a href=src/race3.c><b>src/race3.c</b></a>.  You'll notice that a thread locks 
+the mutex just before modifying <b>s</b> and it unlocks the mutex 
+just after printing <b>s</b>.  This fixes the program so that the output
+makes sense:
+
+<pre>
+UNIX> <font color=darkred><b>bin/race3 4 4 1</b></font>
+Thread 0: AAA
+Thread 1: BBB
+Thread 2: CCC
+Thread 3: DDD
+UNIX> <font color=darkred><b>bin/race3 4 4 2</b></font>
+Thread 0: AAA
+Thread 0: AAA
+Thread 2: CCC
+Thread 2: CCC
+Thread 1: BBB
+Thread 1: BBB
+Thread 3: DDD
+Thread 3: DDD
+UNIX> <font color=darkred><b>bin/race3 4 70 1</b></font>
+Thread 0: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+Thread 1: BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
+Thread 2: CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC
+Thread 3: DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD
+UNIX> <font color=darkred><b>bin/race3 2 70 100000 | grep AB</b></font>     <font color=blue>This call will never have any output because of the mutex.</font>
+UNIX> 
+</pre>
+
+<h3>Terse advice on mutexes</h3>
+
+One of the challenges in dealing with synchronization primitives is to get
+what you want without constricting the threads system too much.   For 
+example, in your <b>jtalk_server</b> program, you will have to have a 
+data structure that holds all of the current connections.  When someone
+attaches to the socket, you add the connection to that data structure.
+When someone quits his/her <b>jtalk</b> session, then you delete the
+connection from the data structure.  And when someone sends a line to
+the server, you will traverse the data structure, and send the line
+to all the connections.  You will need to protect the data structure
+with a mutex.  For example, you do not want to be traversing the
+data structure and deleting a connection at the same time.  One thing
+you want to think about is how to protect the data structure, but 
+at the same time not cause too many threads to block on the mutex if
+they really don't have to.  We'll talk more about this later.
+
+<hr>
+<h3>Reinforcement - When threads don't cooperate</h3>
+
+The next program is pretty similar to the first two.  It simply reinforces the concept of a
+mutex, and the fact that threads must cooperate to use mutexes correcly.
+<p>
+Our example program is <b><a href=mutex_example_1.c>mutex_example_1.c</a></b>, where 
+we fork off multiple threads, and each
+thread shares a counter and a mutex.
+What each thread does is lock the mutex, update the counter, sleep for a bit, and then
+unlock the mutex.  Before it unlocks the mutex, it checks to make sure that the counter has not
+been altered while it was asleep.  The properties of the mutex data structure assure that this
+works.  Here's the code.
+
+<p><center><table border=3 cellpadding=3><td><pre>
+#include &lt;stdio.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;pthread.h&gt;
+
+<font color=blue>/* Each thread is going to have private information and 
+   shared information.  Here is the shared information. */</font>
+
+struct shared {
+  int counter;            <font color=blue>/* A shared counter. */</font>
+  pthread_mutex_t *lock;  <font color=blue>/* A lock to protect the counter. */</font>
+  int usleeptime;         <font color=blue>/* Microseconds that each thread will sleep after updating the counter. */</font>
+};
+
+<font color=blue>/* Here is the private information */</font>
+
+struct info {
+  int id;                 <font color=blue>/* The thread's id. */</font>
+  struct shared *s;       <font color=blue>/* Pointer to the shared information. */</font>
+};
+
+<font color=blue>/* Here is the procedure that each thread calls.  
+   In a nutshell, each thread locks the mutex, increments the
+   counter, then sleeps.  It then tests to make sure that the
+   counter hasn't been modified, and unlocks the mutex.  It
+   repeats this loop indefinitely. */</font>
+
+void *share_counter(void *arg)
+{
+  struct info *info;    <font color=blue>/* The thread's private info. */</font>
+  struct shared *s;     <font color=blue>/* The thread's shared info. */</font>
+  int counter;          <font color=blue>/* A copy of the counter, to test. */</font>
+
+  info = (struct info *) arg;
+  s = info-&gt;s;
+
+  while (1) {
+
+    <font color=blue>/* Lock the mutex, update the counter and print. */</font>
+
+    pthread_mutex_lock(s-&gt;lock);      
+    s-&gt;counter++;
+    counter = s-&gt;counter;
+    printf("Thread: %3d - Begin - Counter %3d.\n", info->id, s->counter);
+    fflush(stdout);
+
+    <font color=blue>/* Sleep, and then print the counter again. */</font>
+
+    usleep(s-&gt;usleeptime);
+    printf("Thread: %3d - End   - Counter %3d.\n", info->id, s->counter);
+    fflush(stdout);
+
+    <font color=blue>/* Make sure the counter hasn't been modified, then unlock the mutex. */</font>
+
+    if (s-&gt;counter != counter) {
+      printf("Thread %d - Problem -- counter was %d, but now it's %d\n",
+             info-&gt;id, counter, s-&gt;counter);
+      exit(1);
+    }
+    pthread_mutex_unlock(s-&gt;lock);
+
+  }
+
+  return NULL;   <font color=blue>/* Shut the compiler up. */</font>
+}
+
+<font color=blue>/* The main sets up the threads, and exits. */</font>
+  
+int main(int argc, char **argv)
+{
+  int nthreads;
+  int usleeptime;
+  pthread_t *tids;
+  struct shared S;
+  struct info *infos;
+  int i;
+
+  if (argc != 3) {
+    fprintf(stderr, "usage: mutex_example nthreads usleep_time\n");
+    exit(1);
+  }
+
+  nthreads = atoi(argv[1]);
+  usleeptime = atoi(argv[2]);
+
+  tids = (pthread_t *) malloc(sizeof(pthread_t) * nthreads);
+  infos = (struct info *) malloc(sizeof(struct info) * nthreads);
+  for (i = 0; i &lt; nthreads; i++) {
+    infos[i].id = i;
+    infos[i].s = &S;
+  }
+  S.counter = 0;
+  S.usleeptime = usleeptime;
+  S.lock = (pthread_mutex_t *) malloc(sizeof(pthread_mutex_t));
+  pthread_mutex_init(S.lock, NULL);
+
+  for (i = 0; i &lt; nthreads; i++) {
+    pthread_create(tids+i, NULL, share_counter, (void *) &infos[i]);
+  }
+
+  pthread_exit(NULL);
+}
+</pre></td></table></center><p>
+
+You call this with the number of threads, and the number of microseconds that each 
+thread sleeps.  Let's call it with 4 threads and 10,000 microseconds.  You'll see
+that it works as anticipated -- the threads line up on the mutex, and each time
+a thread unlocks the mutex, another thread grabs it and updates the counter:
+
+<pre>
+UNIX> <font color=darkred><b>make bin/mutex_example_1</b></font>
+gcc -o bin/mutex_example_1 src/mutex_example_1.c -lpthread
+UNIX> <font color=darkred><b>bin/mutex_example_1 4 10000 | head -n 20</b></font>
+Thread:   0 - Begin - Counter   1.
+Thread:   0 - End   - Counter   1.
+Thread:   1 - Begin - Counter   2.
+Thread:   1 - End   - Counter   2.
+Thread:   2 - Begin - Counter   3.
+Thread:   2 - End   - Counter   3.
+Thread:   3 - Begin - Counter   4.
+Thread:   3 - End   - Counter   4.
+Thread:   0 - Begin - Counter   5.
+Thread:   0 - End   - Counter   5.
+Thread:   1 - Begin - Counter   6.
+Thread:   1 - End   - Counter   6.
+Thread:   2 - Begin - Counter   7.
+Thread:   2 - End   - Counter   7.
+Thread:   3 - Begin - Counter   8.
+Thread:   3 - End   - Counter   8.
+Thread:   0 - Begin - Counter   9.
+Thread:   0 - End   - Counter   9.
+Thread:   1 - Begin - Counter  10.
+Thread:   1 - End   - Counter  10.
+UNIX> <font color=darkred><b></b></font>
+</pre>
+
+<h3>What happens if we don't use a mutex</h3>
+
+If we don't use a mutex, then the threads don't have exclusive access to the counter.
+I exemplify in in <b><a href=mutex_example_2.c>mutex_example_2.c</a></b>. 
+Here, I have simply commented out
+the <b>pthread_mutex_lock()</b> and 
+<b>pthread_mutex_unlock()</b> calls.  Take a look at the output:
+
+<pre>
+UNIX> <font color=darkred><b>make bin/mutex_example_2</b></font>
+gcc -o bin/mutex_example_2 src/mutex_example_2.c -lpthread
+UNIX> <font color=darkred><b>bin/mutex_example_2 4 10000 | head -n 20</b></font>
+Thread:   0 - Begin - Counter   1.
+Thread:   1 - Begin - Counter   2.
+Thread:   2 - Begin - Counter   3.
+Thread:   3 - Begin - Counter   4.
+Thread:   0 - End   - Counter   4.
+Thread 0 - Problem -- counter was 1, but now it's 4
+Thread:   1 - End   - Counter   4.
+Thread:   2 - End   - Counter   4.
+Thread:   3 - End   - Counter   4.
+UNIX>
+</pre>
+
+What you see here is that all of the threads update the counter, with thread 0 updating it first.
+When thread 0 wakes up, the counter has been changed.  Interestingly, between the time that
+it prints its error statement and the <b>exit(1)</b> call, threads 1, 2 and 3 wake up and
+print their counters.  Then the <b>exit(1)</b> call kills the process.
+<p>
+This program is non-deterministic -- its output depends on the ordering of the threads by the
+system.  Here's a second call, which is quite different:
+
+<pre>
+UNIX> <font color=darkred><b>bin/mutex_example_2 4 10000 | head -n 20</b></font>
+Thread:   3 - Begin - Counter   3.
+Thread:   1 - Begin - Counter   1.
+Thread:   0 - Begin - Counter   1.
+Thread:   2 - Begin - Counter   2.
+Thread:   3 - End   - Counter   3.
+Thread:   1 - End   - Counter   3.
+Thread:   0 - End   - Counter   3.
+Thread:   2 - End   - Counter   3.
+Thread:   3 - Begin - Counter   4.
+Thread 1 - Problem -- counter was 1, but now it's 4
+Thread 0 - Problem -- counter was 1, but now it's 4
+Thread 2 - Problem -- counter was 2, but now it's 4
+UNIX> <font color=darkred><b></b></font>
+</pre>
+
+There are two really interesting things here:
+
+<UL>
+<LI> Threads 0, 1 and 2 run before thread three, updating the counter, but thread 3's <b>fflush()</b> statement
+is executed first. 
+<LI> Threads 0 and 1 both accessed <b>counter</b> simultaneously, so they both read that its value was zero,
+and updated it to 1.  That's a brutal race condition.
+</UL>
+
+I hope this output helps to motivate why you use mutexes to protect shared data.
+
+<h3>Just because you're using a mutex, it doesn't mean that your data is safe from other threads.</h3>
+
+The text in green below is repeated verbatim from above:
+
+<p>
+<font color=green><b><i>I want to point out here, that
+pthread_mutex_lock() does not actively "lock" other threads.
+Instead, it locks a data structure, which can be shared among the
+threads.  The locking and unlocking of the data structure makes
+synchronization guarantees, which are very important to avoiding race
+conditions.  However, I don't want you to get into the habit of
+thinking that pthread_mutex_lock() actively blocks other threads, or
+"locks them out." It doesn't -- it locks a data structure, and when
+other threads try to lock the same data structure, they block.
+Please reread this paragraph.</font></b></i>
+<p>
+
+To illustrate this, 
+<b><a href=src/mutex_example_3.c>src/mutex_example_3.c</a></b> is the exact same
+as 
+<b><a href=src/mutex_example_1.c>src/mutex_example_1.c</a></b>, except the last thread does 
+not lock or unlock the mutex.  All of the others do.  Take a look at the output:
+
+<pre>
+UNIX> <font color=darkred><b>bin/mutex_example_3 4 10000 | head -n 20</b></font>
+Thread:   1 - Begin - Counter   1.
+Thread:   3 - Begin - Counter   2.
+Thread:   1 - End   - Counter   2.
+Thread:   3 - End   - Counter   2.
+Thread 1 - Problem -- counter was 1, but now it's 2
+Thread:   3 - Begin - Counter   3.
+UNIX> 
+</pre>
+
+Thread 1 locks the mutex, which locks out threads 0 and 2.  However, since thread 3 is not
+calling <b>pthread_mutex_lock()</b>, it goes ahead and updates the counter.  Thread 1
+discovers this after it wakes up, and flags the error.  As you can see, just because
+thread 0 locks the mutex, that doesn't mean that it "locks out" all of the other threads.
+It works cooperatively with all of the other threads that try to lock the same mutex.
+
