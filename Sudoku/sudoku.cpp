@@ -93,6 +93,15 @@ bool fillBoard(int board[9][9]) {
 		std::pair<int, int> result = getEmptySpace(board);
 		int row = result.first;
 		int col = result.second;
+
+		if (row == 8 && col == 8) {
+			for (int i = 0; i < 9; i++) {
+				if (checkNum(board, row, col, i+1)) {
+					board[8][8] = i+1;
+					return true;
+				}
+			}
+		}
 	
 		// If no empty space left, the board is filled
 		if (row == 10 && col == 10) {
@@ -113,15 +122,14 @@ bool fillBoard(int board[9][9]) {
 }
 	
 int main() {
+
+	// answer key board "filled" & player board
 	int filled[9][9] = {0};
 	int board[9][9];
 
-	
+	// create sudoku puzzle
 	fillBoard(filled);
-	
-	printBoard(filled);
-	
-	
+	printBoard(filled);	
 	
 	return 0;
 }
