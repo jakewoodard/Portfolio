@@ -3,6 +3,7 @@
 #include <utility>
 #include <ctime>
 #include <random>
+#include <algorithm>
 
 using namespace std;
 
@@ -27,12 +28,25 @@ int getRandomNumber() {
     return distr(eng);
 }
 
+int getRandomNumber2() {
+    // Create a random number generator engine
+    std::random_device rd;  // obtain a random number from hardware
+    std::mt19937 eng(rd()); // seed the generator
+
+    // Define the distribution for integers between 1 and 9 (inclusive)
+    std::uniform_int_distribution<> distr(30, 51);
+
+    // Generate and return a random number
+    return distr(eng);
+}
+
 void printBoard(int board[9][9]) {
 	cout << "\n";
 	for (int i = 0; i < 9; i++) {
 		for (int j = 0; j < 9; j++) {
 			cout << " ";
-			cout << board[i][j]; 
+			if (board[i][j] != 0 ) { cout << board[i][j]; }
+			else { cout << ' '; }
 			cout << " ";
 			if (j % 3 == 2 && j != 8) cout << "|";
 		}
@@ -86,7 +100,6 @@ std::pair<int, int> getEmptySpace(int board[9][9]) {
 }
 
 bool fillBoard(int board[9][9]) {
-
 	int arr[9] = {0};
 
 	while (emptySpace(board)) {
@@ -116,9 +129,43 @@ bool fillBoard(int board[9][9]) {
 			board[row][col] = 0;
 		}
 		if (!hasZero(arr)) return false;
-	printBoard(board);
 	}
 	return false;
+}
+
+void blankSpaces(int board[9][9], int numSpaces) {
+	// if numSpaces is odd, remove middle space
+	if (numSpaces % 2 == 1) {
+		board[4][4] = 0;
+		numSpaces--;
+	}
+
+	for (int i = 0; i < numSpaces; i++) {
+		
+		// generate random spaces to remove
+		int row = getRandomNumber() - 1;
+		int col = getRandomNumber() - 1;
+		int row2;
+		int col2;
+		// calculate mirror of those spaces
+		if ((row - 4) >= 0) {
+			row2 = 4 - abs(row - 4);
+		} else {
+			row2 = 4 + abs(row - 4);
+		}
+		
+		if ((col - 4) >= 0) {
+                        col2 = 4 - abs(col - 4);
+                } else {
+              		col2 = 4 + abs(col - 4);
+                }
+
+		board[row][col] = 0;
+		board[row2][col2] = 0;
+		
+		// increment again for 
+		i++;
+	}
 }
 	
 int main() {
@@ -128,8 +175,25 @@ int main() {
 	int board[9][9];
 
 	// create sudoku puzzle
+	cout << "\nCreating sudoku board.\n";
 	fillBoard(filled);
-	printBoard(filled);	
 	
+	// copy to player board and remove random amount of spaces
+	int numSpaces = getRandomNumber2();
+	cout << "\nRemoving ";
+	cout << numSpaces;
+	cout << " spaces. Good luck. \n\n";
+
+	// copy board to player board
+	for (int i = 0; i < 9; ++i) {
+        	for (int j = 0; j < 9; ++j) {
+            		board[i][j] = filled[i][j];
+        	}
+    	}
+
+	// ask to meet you where u been?
+	blankSpaces(board, numSpaces);
+
+	printBoard(board);	
 	return 0;
 }
